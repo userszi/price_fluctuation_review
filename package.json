@@ -1,0 +1,16 @@
+{
+  "name": "stock-analysis",
+  "version": "1.0.0",
+  "description": "股票涨跌分析应用",
+  "main": "new_stock_analysis.html",
+  "scripts": {
+    "start": "python -m http.server 8000"
+  },
+  "keywords": [
+    "stock",
+    "analysis",
+    "finance"
+  ],
+  "author": "",
+  "license": "ISC"
+}
