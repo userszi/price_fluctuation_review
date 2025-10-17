@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "new_stock_analysis.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "stock_data.json",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/new_stock_analysis.html"
+    },
+    {
+      "src": "/stock_data.json",
+      "dest": "/stock_data.json"
+    }
+  ]
+}
