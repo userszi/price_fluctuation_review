@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>股票涨跌分析 - 专业投资工具</title>
+    <meta name="description" content="专业的股票涨跌分析工具，提供实时市场数据、深度分析和投资建议">
+    <meta name="keywords" content="股票分析,涨跌停,投资,A股,市场数据">
+    
+    <!-- 添加Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 确保marked.js加载完成 -->
+    <script>
+        // 检查marked是否已加载
+        function checkMarkedLoaded() {
+            if (typeof marked === 'undefined') {
+                console.error('marked.js未正确加载，尝试重新加载');
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+                script.onload = function() {
+                    console.log('marked.js重新加载成功');
+                };
+                script.onerror = function() {
+                    console.error('marked.js重新加载失败');
+                };
+                document.head.appendChild(script);
+                return false;
+            }
+            return true;
+        }
+        
+        // 配置marked选项，支持换行符
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                breaks: true,  // 支持换行符
+                gfm: true,     // 启用GitHub风格的Markdown
+                sanitize: false // 不清理HTML标签
+            });
+        }
+    </script>
+    
+    <style>
+        /* 基础样式 */
+        html {
+            box-sizing: border-box;
+        }
+        
+        *, ::after, ::before {
+            box-sizing: inherit;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Roboto', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部导航栏 */
+        .top-bar {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .top-bar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-icon {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-menu li {
+            margin-left: 25px;
+        }
+        
+        .nav-menu a {
+            color: #ecf0f1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-menu a:hover {
+            color: #3498db;
+        }
+        
+        /* 汉堡菜单按钮 */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        
+        /* 移动端导航菜单 */
+        .mobile-nav {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #2c3e50;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 99;
+        }
+        
+        .mobile-nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .mobile-nav-menu li {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .mobile-nav-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .mobile-nav-menu a:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        /* 搜索框 */
+        .search-box {
+            position: relative;
+            width: 300px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border: none;
+            border-radius: 20px;
+            background-color: rgba(255,255,255,0.2);
+            color: #fff;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            background-color: rgba(255,255,255,0.3);
+        }
+        
+        .search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        /* 主要内容区域 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        /* 响应式布局 - 平板和手机 */
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+                margin-bottom: 20px;
+            }
+            
+            .content {
+                order: 1;
+            }
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 25px;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+        
+        /* 移动端侧边栏优化 */
+        @media (max-width: 992px) {
+            .sidebar {
+                position: relative;
+                top: 0;
+                margin-bottom: 20px;
+                border-radius: 8px;
+            }
+            
+            .sidebar-section {
+                margin-bottom: 15px;
+            }
+            
+            .sidebar-title {
+                font-size: 16px;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
+                padding: 5px 0;
+            }
+            
+            .sidebar-title::after {
+                content: '▼';
+                font-size: 12px;
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar-section.collapsed .sidebar-title::after {
+                transform: rotate(180deg);
+            }
+            
+            .filter-list {
+                max-height: 500px;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+            
+            .sidebar-section.collapsed .filter-list {
+                max-height: 0;
+            }
+            
+            .filter-link {
+                font-size: 14px;
+                padding: 8px 12px;
+            }
+        }
+        
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-title .icon {
+            margin-right: 8px;
+        }
+        
+        .filter-list {
+            list-style: none;
+        }
+        
+        .filter-item {
+            margin-bottom: 10px;
+        }
+        
+        .filter-link {
+            display: block;
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: #555;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .filter-link:hover, .filter-link.active {
+            background-color: #3498db;
+            color: #fff;
+        }
+        
+        /* 内容区域 */
+        .content {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        
+        .content-header {
+            padding: 20px 25px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .content-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 25px;
+        }
+        
+        /* 移动端统计卡片优化 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr; /* 单列布局 */
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .stat-value {
+                font-size: 24px;
+            }
+            
+            .stat-label {
+                font-size: 13px;
+                text-align: right;
+                max-width: 40%;
+            }
+        }
+        
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 4px solid #3498db;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card.up {
+            border-left-color: #2ecc71;
+        }
+        
+        .stat-card.down {
+            border-left-color: #e74c3c;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        /* 表格容器 */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        /* 移动端表格优化 */
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: scroll;
+                -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
+            }
+            
+            .stock-table {
+                min-width: 700px; /* 减小最小宽度，适应更多内容 */
+            }
+            
+            /* 调整表格列宽，优先显示重要信息 */
+            .stock-table th:nth-child(1), /* 股票代码 */
+            .stock-table td:nth-child(1) {
+                width: 80px;
+                min-width: 80px;
+            }
+            
+            .stock-table th:nth-child(2), /* 股票名称 */
+            .stock-table td:nth-child(2) {
+                width: 100px;
+                min-width: 100px;
+            }
+            
+            .stock-table th:nth-child(3), /* 当前价格 */
+            .stock-table td:nth-child(3) {
+                width: 80px;
+                min-width: 80px;
+            }
+            
+            .stock-table th:nth-child(4), /* 涨跌幅 */
+            .stock-table td:nth-child(4) {
+                width: 80px;
+                min-width: 80px;
+            }
+            
+            .stock-table th:nth-child(5), /* 成交量 */
+            .stock-table td:nth-child(5) {
+                width: 90px;
+                min-width: 90px;
+            }
+            
+            .stock-table th:nth-child(6), /* 成交额 */
+            .stock-table td:nth-child(6) {
+                width: 100px;
+                min-width: 100px;
+            }
+            
+            .stock-table th:nth-child(7), /* 细分行业 */
+            .stock-table td:nth-child(7) {
+                width: 120px;
+                min-width: 120px;
+            }
+            
+            .stock-table th:nth-child(8), /* 概念标签 */
+            .stock-table td:nth-child(8) {
+                width: 150px;
+                min-width: 150px;
+            }
+            
+            /* 添加滚动提示 */
+            .table-container::after {
+                content: '→';
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                background: rgba(52, 152, 219, 0.8);
+                color: white;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                z-index: 10;
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0% { opacity: 0.7; }
+                50% { opacity: 1; }
+                100% { opacity: 0.7; }
+            }
+            
+            /* 表格滚动时隐藏提示 */
+            .table-container.scrolled::after {
+                display: none;
+            }
+        }
+        
+        /* 股票列表 */
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+            min-width: 800px; /* 确保表格有最小宽度 */
+            font-size: 15px; /* 增大字体 */
+        }
+        
+        .stock-table th {
+            background-color: #f8f9fa;
+            padding: 15px 12px; /* 增加垂直内边距 */
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #e9ecef;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .stock-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        
+        .stock-table th.sortable:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sort-icon {
+            font-size: 12px;
+            margin-left: 5px;
+            opacity: 0.6;
+        }
+        
+        .sort-icon.asc {
+            opacity: 1;
+        }
+        
+        .sort-icon.desc {
+            opacity: 1;
+        }
+        
+        .sortable.sort-asc .sort-icon,
+        .sortable.sort-desc .sort-icon {
+            opacity: 1;
+        }
+        
+        .stock-table td {
+            padding: 15px 12px; /* 增加垂直内边距 */
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 14px; /* 增大字体 */
+        }
+        
+        .stock-table td:nth-child(7) {
+            padding: 10px 8px;
+            white-space: normal;
+            line-height: 1.3;
+            height: auto;
+        }
+        
+        .stock-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .stock-table th:nth-child(1), 
+        .stock-table td:nth-child(1) {
+            width: 80px;
+        }
+        
+        .stock-table th:nth-child(2), 
+        .stock-table td:nth-child(2) {
+            width: 70px;
+        }
+        
+        .stock-code {
+            font-weight: 700;
+            color: #3498db;
+        }
+        
+        .stock-name {
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            position: relative;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-decoration-color: rgba(52, 152, 219, 0.5);
+        }
+        
+        .stock-name:hover {
+            color: #3498db;
+            text-decoration-color: #3498db;
+        }
+        
+        .stock-table th:nth-child(3), 
+        .stock-table td:nth-child(3) {
+            width: 70px;
+            text-align: right;
+        }
+        
+        .stock-table th:nth-child(4), 
+        .stock-table td:nth-child(4) {
+            width: 80px;
+            text-align: right;
+        }
+        
+        .stock-table th:nth-child(5), 
+        .stock-table td:nth-child(5) {
+            width: 80px;
+            text-align: right;
+        }
+        
+        .stock-table th:nth-child(6), 
+        .stock-table td:nth-child(6) {
+            width: 100px;
+        }
+        
+        /* 概念标签列宽度 - 可通过JavaScript动态调整 */
+        .stock-table th:nth-child(7), 
+        .stock-table td:nth-child(7) {
+            width: var(--concept-column-width, 200px);
+            max-width: var(--concept-column-width, 200px);
+        }
+        
+        .price-up {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .price-down {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.8);
+            letter-spacing: 0.3px;
+        }
+        
+        .tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+        
+        .tag-ai {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: #fff;
+            border-color: #3498db;
+        }
+        
+        .tag-tech {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: #fff;
+            border-color: #9b59b6;
+        }
+        
+        .tag-energy {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: #fff;
+            border-color: #2ecc71;
+        }
+        
+        .tag-finance {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: #fff;
+            border-color: #f39c12;
+        }
+        
+        .tag-military {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            border-color: #e74c3c;
+        }
+        
+        .tag-medical {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            color: #fff;
+            border-color: #1abc9c;
+        }
+        
+        .tag-auto {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: #fff;
+            border-color: #34495e;
+        }
+        
+        .tag-soe {
+            background: linear-gradient(135deg, #e91e63, #c2185b);
+            color: #fff;
+            border-color: #e91e63;
+        }
+        
+        .tag-default {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            color: #fff;
+            border-color: #bdc3c7;
+        }
+        
+        /* 基于频次的标签颜色 - 现代渐变风格 */
+        .tag-freq-1 {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: #fff;
+            border-color: #ff6b6b;
+        }
+        
+        .tag-freq-2 {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: #fff;
+            border-color: #4ecdc4;
+        }
+        
+        .tag-freq-3 {
+            background: linear-gradient(135deg, #45b7d1, #2196f3);
+            color: #fff;
+            border-color: #45b7d1;
+        }
+        
+        .tag-freq-4 {
+            background: linear-gradient(135deg, #f9ca24, #f0932b);
+            color: #fff;
+            border-color: #f9ca24;
+        }
+        
+        .tag-freq-5 {
+            background: linear-gradient(135deg, #a55eea, #8854d0);
+            color: #fff;
+            border-color: #a55eea;
+        }
+        
+        .tag-freq-6 {
+            background: linear-gradient(135deg, #26de81, #20bf6b);
+            color: #fff;
+            border-color: #26de81;
+        }
+        
+        .tag-freq-7 {
+            background: linear-gradient(135deg, #4834d4, #686de0);
+            color: #fff;
+            border-color: #4834d4;
+        }
+        
+        .tag-freq-8 {
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: #fff;
+            border-color: #fd79a8;
+        }
+        
+        .tag-freq-9 {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: #fff;
+            border-color: #a29bfe;
+        }
+        
+        .tag-freq-10 {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: #fff;
+            border-color: #00b894;
+        }
+        
+        /* 详情面板 - 改为悬浮提示框，优化高度限制 */
+        .detail-panel {
+            display: none;
+            position: absolute;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            padding: 18px;
+            z-index: 1000;
+            max-width: 500px;
+            max-height: 85vh; /* 进一步增加最大高度为视窗高度的85% */
+            overflow-y: auto; /* 内容超出时显示滚动条 */
+            animation: fadeIn 0.3s;
+            border: 1px solid rgba(0,0,0,0.08);
+            word-wrap: break-word; /* 防止长单词溢出 */
+            word-break: break-word; /* 允许在单词内换行 */
+        }
+        
+        /* 可点击的涨跌停原因区域样式 */
+        .clickable-reason {
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        
+        .clickable-reason:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .click-hint {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        /* 涨跌停深度分析区域样式 */
+        .stock-logic-section {
+            margin-top: 20px;
+            border-top: 1px solid #e9ecef;
+            padding-top: 15px;
+        }
+        
+        .stock-logic-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        
+        .close-logic-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .close-logic-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .stock-logic-content {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* Markdown渲染样式 */
+        .stock-logic-content h1, .stock-logic-content h2, .stock-logic-content h3 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .stock-logic-content h1 {
+            font-size: 20px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 5px;
+        }
+        
+        .stock-logic-content h2 {
+            font-size: 18px;
+        }
+        
+        .stock-logic-content h3 {
+            font-size: 16px;
+        }
+        
+        .stock-logic-content p {
+            margin-bottom: 10px;
+        }
+        
+        .stock-logic-content ul, .stock-logic-content ol {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .stock-logic-content li {
+            margin-bottom: 5px;
+        }
+        
+        .stock-logic-content strong {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .stock-logic-content em {
+            font-style: italic;
+            color: #6c757d;
+        }
+        
+        /* 格式化stockLogic内容样式 */
+        .stock-logic-formatted {
+            margin-bottom: 10px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .keywords-section {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        
+        .keywords-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .keyword-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .keyword-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+        
+        .keyword-plus {
+            color: #ffcc00;
+            font-size: 16px;
+            margin: 0 3px;
+            animation: sparkle 1.5s infinite alternate;
+        }
+        
+        .keyword-connector {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin: 0 5px;
+            position: relative;
+            top: 5px; /* 向下移动1px - 可选值: 1px, 2px, 3px, 4px */
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes sparkle {
+            0% { opacity: 0.7; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.8; transform: scale(1); }
+        }
+        
+        .details-section {
+            margin-top: 15px;
+        }
+        
+        .details-container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .detail-point {
+            margin-bottom: 12px;
+            padding-left: 5px;
+        }
+        
+        .point-number {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 15px;
+        }
+        
+        /* 移动端详情面板优化 */
+        @media (max-width: 768px) {
+            .detail-panel {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 90%;
+                max-width: none;
+                max-height: 80vh;
+                border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+            
+            .detail-panel::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: -1;
+            }
+            
+            .detail-header {
+                padding-bottom: 10px;
+                border-bottom: 1px solid #eee;
+                margin-bottom: 15px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .detail-close {
+                display: block;
+                width: 24px;
+                height: 24px;
+                background: #f5f5f5;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 24px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            
+            .detail-close:hover {
+                background: #e0e0e0;
+            }
+            
+            /* 移动端字体大小和触摸目标优化 */
+            body {
+                font-size: 16px;
+                line-height: 1.5;
+            }
+            
+            /* 标题字体大小 */
+            h1 {
+                font-size: 24px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            h3 {
+                font-size: 18px;
+            }
+            
+            /* 导航栏字体和触摸目标 */
+            .nav-links a {
+                font-size: 16px;
+                padding: 12px 16px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .menu-toggle {
+                font-size: 20px;
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* 搜索框字体和大小 */
+            .search-input {
+                font-size: 16px;
+                padding: 12px 16px;
+                min-height: 44px;
+            }
+            
+            /* 按钮字体和触摸目标 */
+            .btn {
+                font-size: 16px;
+                padding: 12px 16px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* 表格字体和行高 */
+            .table {
+                font-size: 14px;
+            }
+            
+            .table th,
+            .table td {
+                padding: 12px 8px;
+                min-height: 44px;
+                vertical-align: middle;
+            }
+            
+            /* 链接字体和触摸目标 */
+            .filter-link {
+                font-size: 16px;
+                padding: 10px 12px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            /* 侧边栏折叠按钮 */
+            .sidebar-title {
+                font-size: 16px;
+                padding: 12px 16px;
+                min-height: 44px;
+            }
+            
+            .sidebar-title::after {
+                font-size: 18px;
+            }
+            
+            /* 详情面板字体和间距 */
+            .detail-panel {
+                font-size: 16px;
+                padding: 20px;
+            }
+            
+            .detail-header {
+                padding-bottom: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .detail-close {
+                font-size: 24px;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .detail-item {
+                padding: 10px 0;
+            }
+            
+            .detail-label {
+                font-size: 14px;
+            }
+            
+            .detail-value {
+                font-size: 16px;
+            }
+            
+            /* 原因分析区域 */
+            .reason-item {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .reason-item-title {
+                font-size: 16px;
+                line-height: 1.4;
+            }
+            
+            .reason-desc {
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            
+            /* 标签字体 */
+            .tag {
+                font-size: 12px;
+                padding: 4px 8px;
+                margin: 2px;
+            }
+            
+            /* 统计卡片字体 */
+            .stat-value {
+                font-size: 24px;
+            }
+            
+            .stat-label {
+                font-size: 14px;
+            }
+            
+            /* 页脚字体 */
+            .footer {
+                font-size: 14px;
+                padding: 20px 0;
+            }
+            
+            /* 移动端间距调整 */
+            .container {
+                padding: 0 15px;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .sidebar {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                gap: 15px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            /* 触摸目标最小尺寸44px */
+            .stock-name,
+            .stock-code,
+            .stock-price,
+            .stock-change,
+            .stock-turnover,
+            .stock-amount {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .detail-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .close-btn {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+        
+        .close-btn:hover {
+            background: #c0392b;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            background: #f8f9fa;
+            padding: 6px 4px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-bottom: 2px;
+        }
+        
+        .detail-value {
+            font-size: 11px;
+            font-weight: 600;
+            color: #2c3e50;
+            word-wrap: break-word;
+        }
+        
+        .reason-section {
+            margin-top: 12px;
+        }
+        
+        .reason-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .expand-all-btn {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .expand-all-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .reason-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #3498db;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .reason-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+        
+        .reason-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        
+        .reason-item-title {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 13px;
+            flex: 1;
+            margin-right: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .reason-item-badges {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        
+        .importance-badge, .count-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background-color: #e8f4f8;
+            color: #3498db;
+            font-weight: 500;
+        }
+        
+        .reason-time {
+            font-size: 9px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+            font-style: italic;
+        }
+        
+        .reason-core-entity {
+            font-size: 10px;
+            color: #e67e22;
+            margin-bottom: 4px;
+            font-weight: 500;
+            padding: 2px 6px;
+            background-color: rgba(230, 126, 34, 0.1);
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .reason-key-info-chain {
+            font-size: 10px;
+            color: #8e44ad;
+            margin-bottom: 6px;
+            font-weight: 500;
+            padding: 2px 6px;
+            background-color: rgba(142, 68, 173, 0.1);
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .reason-desc {
+            color: #555;
+            line-height: 1.4;
+            font-size: 12px;
+            word-wrap: break-word;
+            word-break: break-word;
+            position: relative;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            transition: all 0.3s ease;
+        }
+        
+        .reason-desc.expanded {
+            -webkit-line-clamp: unset;
+            max-height: none;
+        }
+        
+        .reason-desc-toggle {
+            font-size: 9px;
+            color: #3498db;
+            cursor: pointer;
+            margin-top: 4px;
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        .reason-desc-toggle:hover {
+            text-decoration: underline;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+                margin-bottom: 20px;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .mobile-nav.active {
+                display: block;
+            }
+            
+            .top-bar-container {
+                flex-wrap: wrap;
+            }
+            
+            .search-box {
+                width: 200px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            /* 容器调整 */
+            .container {
+                padding: 10px;
+            }
+            
+            /* 顶部导航栏调整 */
+            .top-bar {
+                padding: 10px 0;
+            }
+            
+            .top-bar-container {
+                padding: 0 10px;
+            }
+            
+            .logo {
+                font-size: 20px;
+            }
+            
+            .search-box {
+                width: 100%;
+                margin-top: 10px;
+            }
+            
+            /* 统计卡片调整 */
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-value {
+                font-size: 24px;
+            }
+            
+            /* 表格调整 */
+            .stock-table {
+                font-size: 13px;
+                min-width: 700px;
+            }
+            
+            .stock-table th, .stock-table td {
+                padding: 8px 6px;
+            }
+            
+            .tag {
+                font-size: 11px;
+                padding: 3px 6px;
+                margin-right: 4px;
+                margin-bottom: 4px;
+            }
+            
+            /* 详情面板调整 */
+            .detail-panel {
+                max-width: 90vw;
+                max-height: 80vh;
+                padding: 15px;
+            }
+            
+            .detail-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 5px;
+            }
+            
+            .detail-item {
+                padding: 5px 3px;
+                font-size: 12px;
+            }
+            
+            .reason-title {
+                font-size: 13px;
+            }
+            
+            .reason-desc {
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* 更小屏幕的调整 */
+            .container {
+                padding: 5px;
+            }
+            
+            .logo {
+                font-size: 18px;
+            }
+            
+            .logo-icon {
+                font-size: 22px;
+                margin-right: 6px;
+            }
+            
+            .search-input {
+                padding: 8px 35px 8px 12px;
+                font-size: 14px;
+            }
+            
+            .stats-grid {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            .stat-label {
+                font-size: 13px;
+            }
+            
+            .stock-table {
+                font-size: 12px;
+                min-width: 600px;
+            }
+            
+            .stock-table th, .stock-table td {
+                padding: 6px 4px;
+            }
+            
+            .tag {
+                font-size: 10px;
+                padding: 2px 5px;
+                margin-right: 3px;
+                margin-bottom: 3px;
+                max-width: 70px;
+            }
+            
+            .detail-panel {
+                max-width: 95vw;
+                padding: 12px;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .detail-title {
+                font-size: 16px;
+            }
+            
+            .reason-title {
+                font-size: 12px;
+            }
+            
+            .reason-desc {
+                font-size: 10px;
+            }
+            
+            .reason-core-entity, .reason-key-info-chain {
+                font-size: 9px;
+                padding: 1px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="top-bar">
+        <div class="top-bar-container">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <a href="#" class="logo">
+                <span class="logo-icon">📈</span>
+                股票涨跌分析
+            </a>
+            
+            <ul class="nav-menu">
+                <li><a href="#">首页</a></li>
+                <li><a href="#">市场行情</a></li>
+                <li><a href="#">数据分析</a></li>
+                <li><a href="#">投资工具</a></li>
+            </ul>
+            
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="搜索股票代码或名称">
+                <button class="search-btn">🔍</button>
+            </div>
+        </div>
+        
+        <!-- 移动端导航菜单 -->
+        <div class="mobile-nav" id="mobile-nav">
+            <ul class="mobile-nav-menu">
+                <li><a href="#">首页</a></li>
+                <li><a href="#">市场行情</a></li>
+                <li><a href="#">数据分析</a></li>
+                <li><a href="#">投资工具</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 主要内容区域 -->
+    <div class="container">
+        <div class="main-content">
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">
+                        <span class="icon">📊</span>
+                        涨跌状态
+                    </h3>
+                    <ul class="filter-list">
+                        <li class="filter-item">
+                            <a href="#" class="filter-link active">全部股票</a>
+                        </li>
+                        <li class="filter-item">
+                            <a href="#" class="filter-link">涨停股票</a>
+                        </li>
+                        <li class="filter-item">
+                            <a href="#" class="filter-link">跌停股票</a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">
+                        <span class="icon">🏢</span>
+                        行业分类
+                    </h3>
+                    <ul class="filter-list" id="industry-list">
+                        <!-- 行业分类将通过JavaScript动态生成 -->
+                    </ul>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3 class="sidebar-title">
+                        <span class="icon">🏷️</span>
+                        概念标签
+                    </h3>
+                    <ul class="filter-list" id="concept-list">
+                        <!-- 概念标签将通过JavaScript动态生成 -->
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 内容区域 -->
+            <div class="content">
+                <div class="content-header">
+                    <h2 class="content-title">今日市场概览</h2>
+                </div>
+                
+                <!-- 统计卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">89</div>
+                        <div class="stat-label">总股票数</div>
+                    </div>
+                    <div class="stat-card up">
+                        <div class="stat-value">66</div>
+                        <div class="stat-label">涨跌停股票</div>
+                    </div>
+                    <div class="stat-card down">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">跌停股票</div>
+                    </div>
+                </div>
+                
+                <!-- 股票列表 -->
+                <div class="table-container">
+                    <table class="stock-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-column="code">代码 <span class="sort-icon">↕</span></th>
+                                <th class="sortable" data-column="name">名称 <span class="sort-icon">↕</span></th>
+                                <th class="sortable" data-column="price">现价 <span class="sort-icon">↕</span></th>
+                                <th class="sortable" data-column="change">涨跌幅 <span class="sort-icon">↕</span></th>
+                                <th class="sortable" data-column="amount">总金额 <span class="sort-icon">↕</span></th>
+                                <th class="sortable" data-column="industry">行业 <span class="sort-icon">↕</span></th>
+                                <th>概念标签</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-list">
+                            <!-- 股票数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 详情面板 - 改为悬浮提示框 -->
+        <div class="detail-panel" id="detail-panel">
+            <div class="detail-header">
+                <h3 class="detail-title" id="detail-title">股票详情</h3>
+            </div>
+            
+            <div class="detail-grid" id="detail-basic">
+                <!-- 基本信息将通过JavaScript动态加载 -->
+            </div>
+            
+            <div class="reason-section">
+                <h3 class="reason-title">
+                    📢社区热点讨论
+                    <button class="expand-all-btn" id="expand-all-btn">展开全部</button>
+                </h3>
+                <div id="detail-reasons">
+                    <!-- 原因分析将通过JavaScript动态加载 -->
+                </div>
+            </div>
+            
+            <div class="stock-logic-section" id="stock-logic-section" style="display: none;">
+                <h3 class="stock-logic-title">
+                    📈涨跌停深度分析
+                    <button class="close-logic-btn" id="close-logic-btn">关闭</button>
+                </h3>
+                <div class="stock-logic-content" id="stock-logic-content">
+                    <!-- stockLogic内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 格式化stockLogic内容
+        function formatStockLogic(stockLogic) {
+            if (!stockLogic) return '<p>暂无详细分析内容</p>';
+            
+            // 查找第一个数字编号的位置（如"1、"）
+            const firstNumberIndex = stockLogic.search(/\d+、/);
+            
+            if (firstNumberIndex === -1) {
+                // 如果没有找到数字编号，直接返回原内容，但处理换行
+                return stockLogic.replace(/\n/g, '<br>');
+            }
+            
+            // 提取关键词部分（数字编号之前的内容）
+            const keywordsPart = stockLogic.substring(0, firstNumberIndex).trim();
+            
+            // 提取详细内容部分（数字编号之后的内容）
+            const detailsPart = stockLogic.substring(firstNumberIndex).trim();
+            
+            // 图标数组 - 20个不同的图标
+            const icons = [
+                '✨', '🌟', '💫', '⭐', '🌠', 
+                '🔥', '💎', '🎯', '🚀', '🌈',
+                '💡', '🎨', '🔮', '🎪', '🎭',
+                '🌺', '🦄', '🌸', '🍀', '🌻'
+            ];
+            
+            // 随机选择图标的函数
+            function getRandomIcon() {
+                return icons[Math.floor(Math.random() * icons.length)];
+            }
+            
+            // 处理关键词部分：为每个概念添加随机图标，并用➕连接
+            // 首先分割关键词
+            const keywords = keywordsPart.split('+').map(k => k.trim()).filter(k => k);
+            let formattedKeywords = '';
+            
+            for (let i = 0; i < keywords.length; i++) {
+                const keyword = keywords[i];
+                const icon = getRandomIcon();
+                
+                // 为每个概念添加图标
+                formattedKeywords += `<span class="keyword-item">${icon} ${keyword}</span>`;
+                
+                // 如果不是最后一个关键词，添加连接符号
+                if (i < keywords.length - 1) {
+                    formattedKeywords += ` <span class="keyword-connector">➕</span> `;
+                }
+            }
+            
+            // 处理详细内容部分：确保每个编号点都换行显示
+            let formattedDetails = detailsPart
+                // 为每个编号点添加换行和样式
+                .replace(/(\d+、)/g, '<div class="detail-point"><span class="point-number">$1</span>')
+                // 在每个点的末尾添加div结束标签
+                .replace(/(?=\d+、|$)/g, '</div>')
+                // 处理换行符
+                .replace(/\n/g, '<br>');
+            
+            // 组合格式化后的内容
+            return `
+                <div class="stock-logic-formatted">
+                    <div class="keywords-section">
+                        <h3 class="section-title">🔑 关键概念</h3>
+                        <div class="keywords-container">${formattedKeywords}</div>
+                    </div>
+                    <div class="details-section">
+                        <h3 class="section-title">📋 详细分析</h3>
+                        <div class="details-container">${formattedDetails}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 设置概念标签列宽度
+        function setConceptColumnWidth(width) {
+            document.documentElement.style.setProperty('--concept-column-width', width);
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStockData();
+            setupExpandToggle();
+            setupFilterLinks();
+            setupSearch();
+            setupSorting();
+            setupTableScrollDetection(); // 添加表格滚动检测
+            setupSidebarToggle(); // 添加侧边栏折叠功能
+            setupMobileDetailPanel(); // 添加移动端详情面板优化
+            
+            // 为详情面板添加鼠标悬停事件
+            const detailPanel = document.getElementById('detail-panel');
+            detailPanel.addEventListener('mouseenter', function() {
+                // 鼠标进入面板时，取消任何隐藏操作
+                clearTimeout(detailPanel.hideTimeout);
+            });
+            
+            detailPanel.addEventListener('mouseleave', function() {
+                // 鼠标离开面板时，延迟隐藏
+                detailPanel.hideTimeout = setTimeout(() => {
+                    detailPanel.style.display = 'none';
+                }, 300);
+            });
+        });
+        
+        // 设置展开/收起功能
+        function setupExpandToggle() {
+            // 一键展开/收起所有摘要按钮
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'expand-all-btn') {
+                    const button = e.target;
+                    // 只获取有展开按钮的摘要
+                    const visibleToggles = document.querySelectorAll('.reason-desc-toggle:not([style*="display: none"])');
+                    const allDescs = Array.from(visibleToggles).map(toggle => 
+                        document.getElementById(toggle.getAttribute('data-target'))
+                    ).filter(Boolean);
+                    
+                    if (button.textContent === '展开全部') {
+                        // 展开所有摘要
+                        allDescs.forEach(desc => desc.classList.add('expanded'));
+                        visibleToggles.forEach(toggle => toggle.textContent = '收起');
+                        button.textContent = '收起全部';
+                    } else {
+                        // 收起所有摘要
+                        allDescs.forEach(desc => desc.classList.remove('expanded'));
+                        visibleToggles.forEach(toggle => toggle.textContent = '展开');
+                        button.textContent = '展开全部';
+                    }
+                }
+                
+                // 单个摘要展开/收起按钮
+                if (e.target && e.target.classList.contains('reason-desc-toggle')) {
+                    const targetId = e.target.getAttribute('data-target');
+                    const targetDesc = document.getElementById(targetId);
+                    
+                    if (targetDesc) {
+                        if (targetDesc.classList.contains('expanded')) {
+                            targetDesc.classList.remove('expanded');
+                            e.target.textContent = '展开';
+                        } else {
+                            targetDesc.classList.add('expanded');
+                            e.target.textContent = '收起';
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 加载股票数据
+        async function loadStockData() {
+            try {
+                // 添加时间戳参数强制刷新缓存
+                const timestamp = new Date().getTime();
+                const response = await fetch(`stock_data.json?t=${timestamp}`);
+                const data = await response.json();
+                
+                // 更新统计数据
+                updateStatistics(data.statistics);
+                
+                // 生成行业分类和概念标签列表
+                generateFilterLists(data.stocks);
+                
+                // 渲染股票列表
+                renderStockList(data.stocks);
+                
+                // 保存数据供筛选使用
+                window.stockData = data.stocks;
+            } catch (error) {
+                console.error('加载股票数据失败:', error);
+                // 如果加载失败，显示错误信息
+                document.getElementById('stock-list').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">数据加载失败，请检查stock_data.json文件是否存在</td></tr>';
+            }
+        }
+        
+        // 更新统计数据
+        function updateStatistics(stats) {
+            document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = stats.total_stocks;
+            document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = stats.limit_up;
+            document.querySelector('.stat-card:nth-child(3) .stat-value').textContent = stats.limit_down;
+        }
+        
+        // 生成筛选列表
+        function generateFilterLists(stockData) {
+            // 统计细分行业出现频率
+            const subIndustryCount = {};
+            stockData.forEach(stock => {
+                if (stock.subIndustry && stock.subIndustry !== '--') {
+                    subIndustryCount[stock.subIndustry] = (subIndustryCount[stock.subIndustry] || 0) + 1;
+                }
+            });
+            
+            // 按频率排序并生成行业分类列表
+            const sortedSubIndustries = Object.entries(subIndustryCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10); // 只显示前10个
+            
+            const industryList = document.getElementById('industry-list');
+            industryList.innerHTML = '';
+            
+            sortedSubIndustries.forEach(([industry, count]) => {
+                const li = document.createElement('li');
+                li.className = 'filter-item';
+                li.innerHTML = `<a href="#" class="filter-link">${industry} (${count})</a>`;
+                industryList.appendChild(li);
+            });
+            
+            // 统计概念标签出现频率
+            const conceptCount = {};
+            stockData.forEach(stock => {
+                if (stock.concepts && stock.concepts !== '--') {
+                    // 从【概念1;概念2;概念3】格式中提取概念
+                    const conceptsStr = stock.concepts.replace('【', '').replace('】', '');
+                    const concepts = conceptsStr.split(';').map(c => c.trim());
+                    
+                    concepts.forEach(concept => {
+                        if (concept) {
+                            conceptCount[concept] = (conceptCount[concept] || 0) + 1;
+                        }
+                    });
+                }
+            });
+            
+            // 按频率排序并生成概念标签列表
+            const sortedConcepts = Object.entries(conceptCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10); // 只显示前10个
+            
+            const conceptList = document.getElementById('concept-list');
+            conceptList.innerHTML = '';
+            
+            sortedConcepts.forEach(([concept, count]) => {
+                const li = document.createElement('li');
+                li.className = 'filter-item';
+                li.innerHTML = `<a href="#" class="filter-link">${concept} (${count})</a>`;
+                conceptList.appendChild(li);
+            });
+        }
+        
+        // 渲染股票列表
+        function renderStockList(data) {
+            const stockList = document.getElementById('stock-list');
+            stockList.innerHTML = '';
+            
+            // 首先统计所有概念的出现频次
+            const conceptCount = {};
+            data.forEach(stock => {
+                if (stock.concepts && stock.concepts !== '--') {
+                    const conceptsStr = stock.concepts.replace('【', '').replace('】', '');
+                    const concepts = conceptsStr.split(';').map(c => c.trim());
+                    
+                    concepts.forEach(concept => {
+                        if (concept) {
+                            conceptCount[concept] = (conceptCount[concept] || 0) + 1;
+                        }
+                    });
+                }
+            });
+            
+            // 根据频次排序，获取前10个高频概念
+            const topConceptsByFrequency = Object.entries(conceptCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([concept]) => concept);
+            
+            data.forEach(stock => {
+                const row = document.createElement('tr');
+                
+                // 移除整行的点击事件，改为在股票名称单元格上添加悬浮事件
+                // row.onclick = () => showStockDetail(stock);
+                
+                const changeClass = stock.change.startsWith('+') ? 'price-up' : 'price-down';
+                
+                // 处理概念标签，从字符串中提取概念
+                let concepts = [];
+                if (stock.concepts && stock.concepts !== '--') {
+                    // 从【概念1;概念2;概念3】格式中提取概念
+                    const conceptsStr = stock.concepts.replace('【', '').replace('】', '');
+                    concepts = conceptsStr.split(';').map(c => c.trim());
+                }
+                
+                // 只取前三个概念标签
+                const topConcepts = concepts.slice(0, 3);
+                
+                // 生成概念标签，颜色基于频次
+                const tags = topConcepts.map(concept => {
+                    let tagClass = 'tag';
+                    
+                    // 根据概念在频次排序中的位置设置颜色
+                    const index = topConceptsByFrequency.indexOf(concept);
+                    if (index !== -1) {
+                        // 前10个高频概念使用不同颜色
+                        if (index === 0) tagClass += ' tag-freq-1'; // 最高频
+                        else if (index === 1) tagClass += ' tag-freq-2';
+                        else if (index === 2) tagClass += ' tag-freq-3';
+                        else if (index === 3) tagClass += ' tag-freq-4';
+                        else if (index === 4) tagClass += ' tag-freq-5';
+                        else if (index === 5) tagClass += ' tag-freq-6';
+                        else if (index === 6) tagClass += ' tag-freq-7';
+                        else if (index === 7) tagClass += ' tag-freq-8';
+                        else if (index === 8) tagClass += ' tag-freq-9';
+                        else tagClass += ' tag-freq-10';
+                    } else {
+                        tagClass += ' tag-default'; // 默认颜色
+                    }
+                    
+                    return `<span class="${tagClass}">${concept}</span>`;
+                }).join('');
+                
+                row.innerHTML = `
+                    <td class="stock-code">${stock.code}</td>
+                    <td class="stock-name" data-stock='${JSON.stringify(stock).replace(/'/g, "&apos;")}'>${stock.name}</td>
+                    <td>${stock.price}</td>
+                    <td class="${changeClass}">${stock.change}</td>
+                    <td>${stock.amount}</td>
+                    <td>${stock.industry}</td>
+                    <td>${tags}</td>
+                `;
+                
+                stockList.appendChild(row);
+            });
+            
+            // 为所有股票名称添加悬浮事件
+            document.querySelectorAll('.stock-name').forEach(element => {
+                element.addEventListener('mouseenter', function(e) {
+                    // 清除任何现有的隐藏定时器
+                    const detailPanel = document.getElementById('detail-panel');
+                    clearTimeout(detailPanel.hideTimeout);
+                    
+                    // 隐藏之前显示的涨跌停原因深度分析内容
+                    const stockLogicSection = document.getElementById('stock-logic-section');
+                    if (stockLogicSection) {
+                        stockLogicSection.style.display = 'none';
+                        console.log('已隐藏之前显示的涨跌停原因深度分析内容');
+                    }
+                    
+                    const stockData = JSON.parse(this.getAttribute('data-stock'));
+                    showStockDetail(stockData, e);
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    // 延迟隐藏，给用户时间移动到详情面板
+                    const detailPanel = document.getElementById('detail-panel');
+                    detailPanel.hideTimeout = setTimeout(() => {
+                        if (!detailPanel.matches(':hover')) {
+                            detailPanel.style.display = 'none';
+                        }
+                    }, 200);
+                });
+            });
+        }
+        
+        // 显示股票详情 - 改为悬浮提示框
+        function showStockDetail(stock, event) {
+            const detailPanel = document.getElementById('detail-panel');
+            const detailTitle = document.getElementById('detail-title');
+            const detailBasic = document.getElementById('detail-basic');
+            const detailReasons = document.getElementById('detail-reasons');
+            
+            // 设置标题
+            detailTitle.textContent = `${stock.name} (${stock.code})`;
+            
+            // 设置基本信息 - 按照指定顺序排列
+            detailBasic.innerHTML = `
+                <div class="detail-item">
+                    <div class="detail-label">现价</div>
+                    <div class="detail-value">${stock.price}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">涨跌幅</div>
+                    <div class="detail-value ${stock.change.startsWith('+') ? 'price-up' : 'price-down'}">${stock.change}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">换手率</div>
+                    <div class="detail-value">${(parseFloat(stock.turnover) * 100).toFixed(2)}%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">成交额</div>
+                    <div class="detail-value">${stock.amount}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">市值</div>
+                    <div class="detail-value">${stock.marketValue}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">连续涨跌停天数</div>
+                    <div class="detail-value">${stock.daysLimit}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">行业</div>
+                    <div class="detail-value">${stock.industry}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">细分行业</div>
+                    <div class="detail-value">${stock.subIndustry}</div>
+                </div>
+                <div class="detail-item clickable-reason" id="reason-item">
+                    <div class="detail-label">涨跌停原因</div>
+                    <div class="detail-value">${stock.reason}</div>
+                    <div class="click-hint">🔍点击查看详细分析</div>
+                </div>
+            `;
+            
+            // 设置原因分析 - 限制显示数量但确保摘要完全展示
+            const reasonsToShow = stock.reasons;
+            detailReasons.innerHTML = reasonsToShow.map((reason, index) => {
+                // 根据重要度显示不同的图标
+                let importanceIcon = '';
+                if (reason.importance >= 5) importanceIcon = '🌞'; // 非常重要
+                else if (reason.importance >= 4) importanceIcon = '✨'; // 重要
+                else if (reason.importance >= 3) importanceIcon = '💡'; // 一般
+                else importanceIcon = '🌙'; // 较低
+                
+                // 根据次数显示火苗图标
+                let fireIcons = '';
+                if (reason.count) {
+                    const count = parseInt(reason.count);
+                    for (let i = 0; i < Math.min(count, 5); i++) {
+                        fireIcons += '🔥';
+                    }
+                }
+                
+                // 不限制摘要长度，确保完全展示
+                const summary = reason.summary;
+                
+                return `
+                    <div class="reason-item">
+                        <div class="reason-item-header">
+                            <div class="reason-item-title">${reason.topic}</div>
+                            <div class="reason-item-badges">
+                                <span class="importance-badge">${importanceIcon}</span>
+                                <span class="count-badge">${fireIcons}</span>
+                            </div>
+                        </div>
+                        ${reason.core_entity ? `<div class="reason-core-entity">核心主体: ${reason.core_entity}</div>` : ''}
+                        ${reason.key_info_chain ? `<div class="reason-key-info-chain">关键逻辑: ${reason.key_info_chain}</div>` : ''}
+                        ${reason.time ? `<div class="reason-time">${reason.time}</div>` : ''}
+                        ${reason.summary ? `
+                            <div class="reason-desc" id="reason-desc-${index}" data-summary="${summary.replace(/"/g, '&quot;')}">摘要: ${summary}</div>
+                            <div class="reason-desc-toggle" data-target="reason-desc-${index}" style="display: none;">展开</div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            // 检查每个摘要是否超过三行，如果超过则显示展开按钮
+            setTimeout(() => {
+                document.querySelectorAll('.reason-desc').forEach(desc => {
+                    // 检查实际高度是否大于三行的高度
+                    const lineHeight = parseInt(window.getComputedStyle(desc).lineHeight);
+                    const threeLinesHeight = lineHeight * 3;
+                    
+                    if (desc.scrollHeight > threeLinesHeight) {
+                        // 获取对应的展开按钮
+                        const toggleId = desc.getAttribute('id');
+                        const toggle = document.querySelector(`.reason-desc-toggle[data-target="${toggleId}"]`);
+                        if (toggle) {
+                            toggle.style.display = 'block';
+                        }
+                    }
+                });
+            }, 100);
+            
+            // 智能定位系统 - 优化以确保内容完全可见
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const scrollX = window.pageXOffset;
+            const scrollY = window.pageYOffset;
+            
+            // 先显示面板以获取其尺寸
+            detailPanel.style.display = 'block';
+            detailPanel.style.visibility = 'hidden'; // 先隐藏但保留布局
+            
+            const panelWidth = detailPanel.offsetWidth;
+            const panelHeight = detailPanel.offsetHeight;
+            
+            // 移动端特殊处理
+            if (window.innerWidth <= 768) {
+                // 移动端使用固定定位，居中显示
+                detailPanel.style.position = 'fixed';
+                detailPanel.style.top = '50%';
+                detailPanel.style.left = '50%';
+                detailPanel.style.transform = 'translate(-50%, -50%)';
+                detailPanel.style.width = '90%';
+                detailPanel.style.maxWidth = 'none';
+                
+                // 添加关闭按钮
+                if (!document.getElementById('detail-close-btn')) {
+                    const closeBtn = document.createElement('div');
+                    closeBtn.id = 'detail-close-btn';
+                    closeBtn.className = 'detail-close';
+                    closeBtn.innerHTML = '×';
+                    closeBtn.addEventListener('click', hideDetail);
+                    detailTitle.appendChild(closeBtn);
+                }
+                
+                // 设置最大高度为窗口高度的80%
+                detailPanel.style.maxHeight = (windowHeight * 0.8) + 'px';
+                detailPanel.style.overflowY = 'auto';
+                
+                // 显示面板
+                detailPanel.style.visibility = 'visible';
+            } else {
+                // 桌面端使用绝对定位
+                detailPanel.style.position = 'absolute';
+                detailPanel.style.transform = 'none';
+                detailPanel.style.width = '';
+                detailPanel.style.maxWidth = '500px';
+                
+                // 移除关闭按钮
+                const closeBtn = document.getElementById('detail-close-btn');
+                if (closeBtn) {
+                    closeBtn.remove();
+                }
+                
+                // 计算最佳位置，优先考虑下方显示
+                let leftPos, topPos;
+                
+                // 水平位置计算
+                if (mouseX + panelWidth + 20 <= windowWidth) {
+                    // 右侧有足够空间，显示在鼠标右侧
+                    leftPos = mouseX + 15;
+                } else if (mouseX - panelWidth - 20 >= 0) {
+                    // 左侧有足够空间，显示在鼠标左侧
+                    leftPos = mouseX - panelWidth - 15;
+                } else {
+                    // 两侧空间都不足，居中显示
+                    leftPos = (windowWidth - panelWidth) / 2;
+                }
+                
+                // 垂直位置计算 - 优先显示在下方
+                if (mouseY + panelHeight + 20 <= windowHeight) {
+                    // 下方有足够空间，显示在鼠标下方
+                    topPos = mouseY + 15;
+                } else if (mouseY - panelHeight - 20 >= 0) {
+                    // 上方有足够空间，显示在鼠标上方
+                    topPos = mouseY - panelHeight - 15;
+                } else {
+                    // 上下空间都不足，从顶部开始显示，确保内容可见
+                    topPos = 20; // 距离顶部20px
+                    // 如果面板高度超过窗口高度，调整面板高度
+                    if (panelHeight > windowHeight - 40) {
+                        detailPanel.style.maxHeight = (windowHeight - 40) + 'px';
+                    }
+                }
+                
+                // 应用位置，考虑滚动偏移
+                detailPanel.style.left = (leftPos + scrollX) + 'px';
+                detailPanel.style.top = (topPos + scrollY) + 'px';
+                detailPanel.style.visibility = 'visible'; // 显示面板
+            }
+            
+            // 添加一个小的延迟，确保鼠标可以移动到面板上而不会立即消失
+            detailPanel.dataset.mouseLeaveTime = Date.now();
+            
+            // 添加点击事件处理
+            setTimeout(() => {
+                console.log('开始绑定点击事件'); // 添加调试日志
+                
+                // 使用类选择器而不是ID，避免ID冲突
+                const reasonItem = document.querySelector('.clickable-reason');
+                const stockLogicSection = document.getElementById('stock-logic-section');
+                const stockLogicContent = document.getElementById('stock-logic-content');
+                const closeLogicBtn = document.getElementById('close-logic-btn');
+                
+                console.log('reasonItem:', reasonItem); // 添加调试日志
+                console.log('stockLogicSection:', stockLogicSection); // 添加调试日志
+                console.log('stockLogicContent:', stockLogicContent); // 添加调试日志
+                console.log('closeLogicBtn:', closeLogicBtn); // 添加调试日志
+                
+                // 移除之前的事件监听器（如果存在）
+                if (reasonItem) {
+                    // 克隆节点以移除所有事件监听器
+                    const newReasonItem = reasonItem.cloneNode(true);
+                    reasonItem.parentNode.replaceChild(newReasonItem, reasonItem);
+                    
+                    // 为涨跌停原因区域添加点击事件
+                    newReasonItem.addEventListener('click', function(e) {
+                        e.preventDefault(); // 阻止默认行为
+                        console.log('点击了涨跌停原因区域'); // 添加调试日志
+                        console.log('stock.stockLogic:', stock.stockLogic); // 添加调试日志
+                        
+                        // 显示stockLogic区域
+                        stockLogicSection.style.display = 'block';
+                        console.log('已显示stockLogic区域'); // 添加调试日志
+                        
+                        // 渲染stockLogic内容
+                        if (stock.stockLogic) {
+                            // 使用自定义格式化函数处理stockLogic内容
+                            console.log('原始stockLogic内容:', stock.stockLogic); // 添加调试日志
+                            const formattedContent = formatStockLogic(stock.stockLogic);
+                            console.log('格式化后的内容:', formattedContent); // 添加调试日志
+                            
+                            // 清空内容
+                            stockLogicContent.innerHTML = '';
+                            
+                            // 创建一个临时div来解析HTML
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = formattedContent;
+                            
+                            // 将解析后的节点移动到目标容器
+                            while (tempDiv.firstChild) {
+                                stockLogicContent.appendChild(tempDiv.firstChild);
+                            }
+                            
+                            console.log('已渲染stockLogic内容'); // 添加调试日志
+                        } else {
+                            stockLogicContent.innerHTML = '<p>暂无详细分析内容</p>';
+                            console.log('显示暂无内容提示'); // 添加调试日志
+                        }
+                        
+                        // 滚动到stockLogic区域
+                        stockLogicSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        console.log('已滚动到stockLogic区域'); // 添加调试日志
+                    });
+                    
+                    // 添加鼠标悬停效果，提示用户可以点击
+                    newReasonItem.style.cursor = 'pointer';
+                    newReasonItem.addEventListener('mouseenter', function() {
+                        console.log('鼠标悬停在涨跌停原因区域'); // 添加调试日志
+                        newReasonItem.style.backgroundColor = '#f0f8ff';
+                    });
+                    
+                    newReasonItem.addEventListener('mouseleave', function() {
+                        newReasonItem.style.backgroundColor = '';
+                    });
+                } else {
+                    console.error('未找到涨跌停原因区域元素'); // 添加调试日志
+                }
+                
+                // 为关闭按钮添加点击事件
+                if (closeLogicBtn) {
+                    // 克隆节点以移除所有事件监听器
+                    const newCloseBtn = closeLogicBtn.cloneNode(true);
+                    closeLogicBtn.parentNode.replaceChild(newCloseBtn, closeLogicBtn);
+                    
+                    newCloseBtn.addEventListener('click', function() {
+                        stockLogicSection.style.display = 'none';
+                        console.log('已关闭stockLogic区域'); // 添加调试日志
+                    });
+                } else {
+                    console.error('未找到关闭按钮元素'); // 添加调试日志
+                }
+            }, 100);
+        }
+        
+        // 隐藏详情面板
+        function hideDetail() {
+            const detailPanel = document.getElementById('detail-panel');
+            // 添加延迟，防止用户意外将鼠标移出
+            setTimeout(() => {
+                // 检查鼠标是否在面板上
+                if (!detailPanel.matches(':hover')) {
+                    detailPanel.style.display = 'none';
+                }
+            }, 200);
+        }
+        
+        // 添加移动端触摸事件处理
+        function setupMobileDetailPanel() {
+            const detailPanel = document.getElementById('detail-panel');
+            
+            // 添加背景遮罩点击事件
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768 && 
+                    detailPanel.style.display === 'block' && 
+                    !detailPanel.contains(e.target) &&
+                    !e.target.closest('.stock-name')) {
+                    detailPanel.style.display = 'none';
+                }
+            });
+            
+            // 添加触摸事件，防止滚动时误触
+            detailPanel.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+            });
+            
+            // 添加触摸滑动事件，允许面板内滚动
+            let startY = 0;
+            detailPanel.addEventListener('touchmove', function(e) {
+                const currentY = e.touches[0].clientY;
+                const scrollTop = detailPanel.scrollTop;
+                const scrollHeight = detailPanel.scrollHeight;
+                const height = detailPanel.clientHeight;
+                
+                // 如果面板已经滚动到底部或顶部，阻止默认行为
+                if ((scrollTop === 0 && currentY > startY) || 
+                    (scrollTop + height >= scrollHeight && currentY < startY)) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            detailPanel.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+            });
+        }
+        
+        // 关闭详情面板 - 保留以防万一
+        function closeDetail() {
+            hideDetail();
+        }
+        
+        // 设置筛选链接
+        function setupFilterLinks() {
+            // 使用事件委托处理动态生成的筛选链接
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('filter-link')) {
+                    e.preventDefault();
+                    
+                    // 移除所有active类
+                    document.querySelectorAll('.filter-link').forEach(l => l.classList.remove('active'));
+                    
+                    // 添加active类到当前链接
+                    e.target.classList.add('active');
+                    
+                    // 筛选数据
+                    const filterText = e.target.textContent.trim();
+                    let filteredData = window.stockData || [];
+                    
+                    if (filterText === '涨停股票') {
+                        filteredData = window.stockData.filter(stock => stock.change.startsWith('+'));
+                    } else if (filterText === '跌停股票') {
+                        filteredData = window.stockData.filter(stock => stock.change.startsWith('-'));
+                    } else if (filterText !== '全部股票') {
+                        // 提取筛选文本（去掉频次部分）
+                        const actualFilterText = filterText.replace(/\s*\(\d+\)$/, '');
+                        
+                        // 按行业或概念筛选
+                        filteredData = window.stockData.filter(stock => {
+                            // 检查细分行业
+                            if (stock.subIndustry && stock.subIndustry === actualFilterText) {
+                                return true;
+                            }
+                            
+                            // 检查概念标签
+                            if (stock.concepts && stock.concepts !== '--') {
+                                const conceptsStr = stock.concepts.replace('【', '').replace('】', '');
+                                const concepts = conceptsStr.split(';').map(c => c.trim());
+                                return concepts.includes(actualFilterText);
+                            }
+                            
+                            return false;
+                        });
+                    }
+                    
+                    // 重新渲染列表
+                    renderStockList(filteredData);
+                }
+            });
+        }
+        
+        // 设置搜索功能
+        function setupSearch() {
+            const searchInput = document.querySelector('.search-input');
+            
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase().trim();
+                
+                if (searchText === '') {
+                    renderStockList(window.stockData || []);
+                    return;
+                }
+                
+                const filteredData = window.stockData.filter(stock => 
+                    stock.code.toLowerCase().includes(searchText) || 
+                    stock.name.toLowerCase().includes(searchText)
+                );
+                
+                renderStockList(filteredData);
+            });
+        }
+        
+        // 设置表格滚动检测
+        function setupTableScrollDetection() {
+            const tableContainers = document.querySelectorAll('.table-container');
+            
+            tableContainers.forEach(container => {
+                container.addEventListener('scroll', function() {
+                    if (this.scrollLeft > 10) {
+                        this.classList.add('scrolled');
+                    } else {
+                        this.classList.remove('scrolled');
+                    }
+                });
+            });
+        }
+        
+        // 设置侧边栏折叠功能
+        function setupSidebarToggle() {
+            const sidebarTitles = document.querySelectorAll('.sidebar-title');
+            
+            sidebarTitles.forEach(title => {
+                title.addEventListener('click', function() {
+                    const section = this.parentElement;
+                    section.classList.toggle('collapsed');
+                });
+            });
+        }
+        
+        // 设置排序功能
+        function setupSorting() {
+            const sortHeaders = document.querySelectorAll('.sortable');
+            
+            sortHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-column');
+                    const sortIcon = this.querySelector('.sort-icon');
+                    
+                    // 移除所有其他列的排序状态
+                    sortHeaders.forEach(h => {
+                        if (h !== this) {
+                            h.classList.remove('sort-asc', 'sort-desc');
+                            const icon = h.querySelector('.sort-icon');
+                            if (icon) icon.textContent = '↕';
+                        }
+                    });
+                    
+                    // 切换当前列的排序状态
+                    if (this.classList.contains('sort-asc')) {
+                        this.classList.remove('sort-asc');
+                        this.classList.add('sort-desc');
+                        sortIcon.textContent = '↓';
+                        sortData(column, 'desc');
+                    } else if (this.classList.contains('sort-desc')) {
+                        this.classList.remove('sort-desc');
+                        this.classList.add('sort-asc');
+                        sortIcon.textContent = '↑';
+                        sortData(column, 'asc');
+                    } else {
+                        this.classList.add('sort-asc');
+                        sortIcon.textContent = '↑';
+                        sortData(column, 'asc');
+                    }
+                });
+            });
+        }
+        
+        // 排序数据
+        function sortData(column, order) {
+            const sortedData = [...window.stockData].sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
+                
+                // 处理特殊列的排序
+                if (column === 'price' || column === 'amount') {
+                    // 使用原始数值进行排序
+                    valueA = a[column + '_value'] || parseFloat(valueA.toString().replace(/[,亿万千]/g, ''));
+                    valueB = b[column + '_value'] || parseFloat(valueB.toString().replace(/[,亿万千]/g, ''));
+                } else if (column === 'change') {
+                    // 涨跌幅已经是%格式，只需移除%符号转换为数字
+                    valueA = parseFloat(valueA.toString().replace(/[%]/g, ''));
+                    valueB = parseFloat(valueB.toString().replace(/[%]/g, ''));
+                } else if (column === 'code') {
+                    // 股票代码按数字排序
+                    valueA = parseInt(valueA.toString().replace(/\D/g, ''));
+                    valueB = parseInt(valueB.toString().replace(/\D/g, ''));
+                }
+                
+                // 比较逻辑
+                if (valueA < valueB) return order === 'asc' ? -1 : 1;
+                if (valueA > valueB) return order === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            renderStockList(sortedData);
+        }
+    </script>
+    <script>
+        // 移动端菜单功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileNav = document.querySelector('.mobile-nav');
+            
+            if (menuToggle && mobileNav) {
+                menuToggle.addEventListener('click', function() {
+                    mobileNav.classList.toggle('active');
+                    
+                    // 切换菜单图标
+                    if (mobileNav.classList.contains('active')) {
+                        menuToggle.textContent = '✕'; // 关闭图标
+                    } else {
+                        menuToggle.textContent = '☰'; // 汉堡菜单图标
+                    }
+                });
+                
+                // 点击菜单项后关闭菜单
+                const mobileNavLinks = mobileNav.querySelectorAll('a');
+                mobileNavLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileNav.classList.remove('active');
+                        menuToggle.textContent = '☰';
+                    });
+                });
+                
+                // 点击菜单外部区域关闭菜单
+                document.addEventListener('click', function(event) {
+                    if (!mobileNav.contains(event.target) && !menuToggle.contains(event.target)) {
+                        mobileNav.classList.remove('active');
+                        menuToggle.textContent = '☰';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
