@@ -1953,7 +1953,7 @@
             try {
                 // 添加时间戳参数强制刷新缓存
                 const timestamp = new Date().getTime();
-                const response = await fetch(`stock_data.json?t=${timestamp}`);
+                const response = await fetch(`./stock_data.json?t=${timestamp}`);
                 const data = await response.json();
                 
                 // 更新统计数据
