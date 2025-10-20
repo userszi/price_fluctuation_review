@@ -6,7 +6,7 @@ def process_excel_data():
     """处理Excel数据并转换为JSON格式"""
     
     # 读取Excel文件
-    df = pd.read_excel('d:/工作细化/量化代码/涨跌停复盘/涨停25.10.17.xlsx')
+    df = pd.read_excel('d:/工作细化/量化代码/涨跌停复盘/涨停25.10.20.xlsx')
     
     # 数据清洗和处理
     stock_data = []
@@ -108,7 +108,7 @@ def process_excel_data():
         # 如果没有解析到原因，使用涨停原因类别
         if not reasons and stock['reason'] != '--':
             reasons = [{
-                'topic': f"{stock['name']}涨停原因分析",
+                'topic': f"{stock['name']}涨跌停原因分析",
                 'importance': 4,
                 'summary': f"该股票因{stock['reason']}相关因素涨停"
             }]
@@ -121,7 +121,15 @@ def process_excel_data():
             reason_text = str(row['reason'])
             try:
                 reason_data = json.loads(reason_text)
-                stock_logic = reason_data.get('stockLogic', '')
+                # 检查reason_data可能是列表或字典
+                if isinstance(reason_data, dict):
+                    # 尝试获取stockLogic或analysisContent字段
+                    stock_logic = reason_data.get('stockLogic', '') or reason_data.get('analysisContent', '')
+                elif isinstance(reason_data, list) and len(reason_data) > 0:
+                    # 如果是列表，尝试获取第一个元素的stockLogic或analysisContent字段
+                    first_item = reason_data[0]
+                    if isinstance(first_item, dict):
+                        stock_logic = first_item.get('stockLogic', '') or first_item.get('analysisContent', '')
             except json.JSONDecodeError:
                 stock_logic = reason_text
         
