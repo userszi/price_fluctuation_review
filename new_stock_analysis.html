@@ -1802,15 +1802,66 @@
     
     <script>
         // 格式化stockLogic内容
-        function formatStockLogic(stockLogic) {
+        function formatStockLogic(stockLogic, concept) {
             if (!stockLogic) return '<p>暂无详细分析内容</p>';
             
             // 查找第一个数字编号的位置（如"1、"）
             const firstNumberIndex = stockLogic.search(/\d+、/);
             
+            // 处理概念部分
+            let formattedConcepts = '';
+            if (concept && concept.trim()) {
+                // 分割概念并添加图标
+                const concepts = concept.split(',').map(c => c.trim()).filter(c => c);
+                
+                // 图标数组 - 20个不同的图标
+                const icons = [
+                    '✨', '🌟', '💫', '⭐', '🌠', 
+                    '🔥', '💎', '🎯', '🚀', '🌈',
+                    '💡', '🎨', '🔮', '🎪', '🎭',
+                    '🌺', '🦄', '🌸', '🍀', '🌻'
+                ];
+                
+                // 随机选择图标的函数
+                function getRandomIcon() {
+                    return icons[Math.floor(Math.random() * icons.length)];
+                }
+                
+                // 为每个概念添加图标
+                for (let i = 0; i < concepts.length; i++) {
+                    const conceptItem = concepts[i];
+                    const icon = getRandomIcon();
+                    
+                    formattedConcepts += `<span class="keyword-item">${icon} ${conceptItem}</span>`;
+                    
+                    // 如果不是最后一个概念，添加连接符号
+                    if (i < concepts.length - 1) {
+                        formattedConcepts += ` <span class="keyword-connector">➕</span> `;
+                    }
+                }
+            }
+            
             if (firstNumberIndex === -1) {
                 // 如果没有找到数字编号，直接返回原内容，但处理换行
-                return stockLogic.replace(/\n/g, '<br>');
+                let content = stockLogic.replace(/\n/g, '<br>');
+                
+                // 如果有概念，添加概念部分
+                if (formattedConcepts) {
+                    content = `
+                        <div class="stock-logic-formatted">
+                            <div class="keywords-section">
+                                <h3 class="section-title">🔑 关键概念</h3>
+                                <div class="keywords-container">${formattedConcepts}</div>
+                            </div>
+                            <div class="details-section">
+                                <h3 class="section-title">📋 详细分析</h3>
+                                <div class="details-container">${content}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return content;
             }
             
             // 提取关键词部分（数字编号之前的内容）
@@ -1819,34 +1870,36 @@
             // 提取详细内容部分（数字编号之后的内容）
             const detailsPart = stockLogic.substring(firstNumberIndex).trim();
             
-            // 图标数组 - 20个不同的图标
-            const icons = [
-                '✨', '🌟', '💫', '⭐', '🌠', 
-                '🔥', '💎', '🎯', '🚀', '🌈',
-                '💡', '🎨', '🔮', '🎪', '🎭',
-                '🌺', '🦄', '🌸', '🍀', '🌻'
-            ];
-            
-            // 随机选择图标的函数
-            function getRandomIcon() {
-                return icons[Math.floor(Math.random() * icons.length)];
-            }
-            
-            // 处理关键词部分：为每个概念添加随机图标，并用➕连接
-            // 首先分割关键词
-            const keywords = keywordsPart.split('+').map(k => k.trim()).filter(k => k);
-            let formattedKeywords = '';
-            
-            for (let i = 0; i < keywords.length; i++) {
-                const keyword = keywords[i];
-                const icon = getRandomIcon();
+            // 如果没有从concept字段获取到概念，则从keywordsPart提取
+            if (!formattedConcepts && keywordsPart) {
+                // 图标数组 - 20个不同的图标
+                const icons = [
+                    '✨', '🌟', '💫', '⭐', '🌠', 
+                    '🔥', '💎', '🎯', '🚀', '🌈',
+                    '💡', '🎨', '🔮', '🎪', '🎭',
+                    '🌺', '🦄', '🌸', '🍀', '🌻'
+                ];
+                
+                // 随机选择图标的函数
+                function getRandomIcon() {
+                    return icons[Math.floor(Math.random() * icons.length)];
+                }
+                
+                // 处理关键词部分：为每个概念添加随机图标，并用➕连接
+                // 首先分割关键词
+                const keywords = keywordsPart.split('+').map(k => k.trim()).filter(k => k);
                 
                 // 为每个概念添加图标
-                formattedKeywords += `<span class="keyword-item">${icon} ${keyword}</span>`;
-                
-                // 如果不是最后一个关键词，添加连接符号
-                if (i < keywords.length - 1) {
-                    formattedKeywords += ` <span class="keyword-connector">➕</span> `;
+                for (let i = 0; i < keywords.length; i++) {
+                    const keyword = keywords[i];
+                    const icon = getRandomIcon();
+                    
+                    formattedConcepts += `<span class="keyword-item">${icon} ${keyword}</span>`;
+                    
+                    // 如果不是最后一个关键词，添加连接符号
+                    if (i < keywords.length - 1) {
+                        formattedConcepts += ` <span class="keyword-connector">➕</span> `;
+                    }
                 }
             }
             
@@ -1864,7 +1917,7 @@
                 <div class="stock-logic-formatted">
                     <div class="keywords-section">
                         <h3 class="section-title">🔑 关键概念</h3>
-                        <div class="keywords-container">${formattedKeywords}</div>
+                        <div class="keywords-container">${formattedConcepts}</div>
                     </div>
                     <div class="details-section">
                         <h3 class="section-title">📋 详细分析</h3>
@@ -2391,7 +2444,8 @@
                         if (stock.stockLogic) {
                             // 使用自定义格式化函数处理stockLogic内容
                             console.log('原始stockLogic内容:', stock.stockLogic); // 添加调试日志
-                            const formattedContent = formatStockLogic(stock.stockLogic);
+                            console.log('concept内容:', stock.concept); // 添加调试日志
+                            const formattedContent = formatStockLogic(stock.stockLogic, stock.concept);
                             console.log('格式化后的内容:', formattedContent); // 添加调试日志
                             
                             // 清空内容

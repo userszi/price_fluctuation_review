@@ -115,8 +115,9 @@ def process_excel_data():
         
         stock['reasons'] = reasons
         
-        # 处理reason字段，提取stockLogic内容
+        # 处理reason字段，提取stockLogic和concept内容
         stock_logic = ''
+        concept = ''
         if pd.notna(row['reason']):
             reason_text = str(row['reason'])
             try:
@@ -125,15 +126,20 @@ def process_excel_data():
                 if isinstance(reason_data, dict):
                     # 尝试获取stockLogic或analysisContent字段
                     stock_logic = reason_data.get('stockLogic', '') or reason_data.get('analysisContent', '')
+                    # 尝试获取concept字段
+                    concept = reason_data.get('concept', '')
                 elif isinstance(reason_data, list) and len(reason_data) > 0:
                     # 如果是列表，尝试获取第一个元素的stockLogic或analysisContent字段
                     first_item = reason_data[0]
                     if isinstance(first_item, dict):
                         stock_logic = first_item.get('stockLogic', '') or first_item.get('analysisContent', '')
+                        # 尝试获取concept字段
+                        concept = first_item.get('concept', '')
             except json.JSONDecodeError:
                 stock_logic = reason_text
         
         stock['stockLogic'] = stock_logic
+        stock['concept'] = concept
         stock_data.append(stock)
     
     return stock_data
