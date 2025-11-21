@@ -2081,6 +2081,9 @@
             
             // 统计概念标签出现频率
             const conceptCount = {};
+            // 定义需要过滤掉的概念标签
+            const filteredConcepts = ['融资融券', '国企改革', 'ST板块', '深股通', '沪股通'];
+            
             stockData.forEach(stock => {
                 if (stock.concepts && stock.concepts !== '--') {
                     // 从【概念1;概念2;概念3】格式中提取概念
@@ -2088,7 +2091,7 @@
                     const concepts = conceptsStr.split(';').map(c => c.trim());
                     
                     concepts.forEach(concept => {
-                        if (concept) {
+                        if (concept && !filteredConcepts.includes(concept)) {
                             conceptCount[concept] = (conceptCount[concept] || 0) + 1;
                         }
                     });
