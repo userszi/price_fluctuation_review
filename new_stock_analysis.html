@@ -1407,6 +1407,35 @@
             display: inline-block;
         }
         
+        .reason-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .sentiment-badge {
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .sentiment-badge.positive {
+            color: #27ae60;
+            background-color: rgba(39, 174, 96, 0.1); /* 半透明白色文字绿色背景 */
+        }
+        
+        .sentiment-badge.negative {
+            color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1); /* 半透明白色文字红色背景 */
+        }
+        
         .reason-key-info-chain {
             font-size: 10px;
             color: #8e44ad;
@@ -1755,6 +1784,7 @@
                                 <th class="sortable" data-column="name">名称 <span class="sort-icon">↕</span></th>
                                 <th class="sortable" data-column="price">现价 <span class="sort-icon">↕</span></th>
                                 <th class="sortable" data-column="change">涨跌幅 <span class="sort-icon">↕</span></th>
+                                <th class="sortable" data-column="marketValue">总市值 <span class="sort-icon">↕</span></th>
                                 <th class="sortable" data-column="amount">总金额 <span class="sort-icon">↕</span></th>
                                 <th class="sortable" data-column="industry">行业 <span class="sort-icon">↕</span></th>
                                 <th>概念标签</th>
@@ -2189,6 +2219,7 @@
                     <td class="stock-name" data-stock='${JSON.stringify(stock).replace(/'/g, "&apos;")}'>${stock.name}</td>
                     <td>${stock.price}</td>
                     <td class="${changeClass}">${stock.change}</td>
+                    <td>${stock.marketValue}</td>
                     <td>${stock.amount}</td>
                     <td>${stock.industry}</td>
                     <td>${tags}</td>
@@ -2309,7 +2340,13 @@
                                 <span class="count-badge">${fireIcons}</span>
                             </div>
                         </div>
-                        ${reason.core_entity ? `<div class="reason-core-entity">核心主体: ${reason.core_entity}</div>` : ''}
+                        <div class="reason-header">
+                    ${reason.core_entity ? `<div class="reason-core-entity">核心主体: ${reason.core_entity}</div>` : ''}
+                    ${reason.key_info_chain && reason.sentiment === '正向' ? 
+                      '<span class="sentiment-badge positive">😇正向</span>' : 
+                      reason.key_info_chain && reason.sentiment === '负向' ? 
+                      '<span class="sentiment-badge negative">😈负向</span>' : ''}
+                </div>
                         ${reason.key_info_chain ? `<div class="reason-key-info-chain">关键逻辑: ${reason.key_info_chain}</div>` : ''}
                         ${reason.time ? `<div class="reason-time">${reason.time}</div>` : ''}
                         ${reason.summary ? `
@@ -2722,7 +2759,7 @@
                 let valueB = b[column];
                 
                 // 处理特殊列的排序
-                if (column === 'price' || column === 'amount') {
+                if (column === 'price' || column === 'amount' || column === 'marketValue') {
                     // 使用原始数值进行排序
                     valueA = a[column + '_value'] || parseFloat(valueA.toString().replace(/[,亿万千]/g, ''));
                     valueB = b[column + '_value'] || parseFloat(valueB.toString().replace(/[,亿万千]/g, ''));
