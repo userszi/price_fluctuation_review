@@ -2063,13 +2063,13 @@
                 updateStatistics(data.statistics);
                 
                 // 生成行业分类和概念标签列表
-                generateFilterLists(data.stocks);
-                
-                // 渲染股票列表
-                renderStockList(data.stocks);
-                
-                // 保存数据供筛选使用
-                window.stockData = data.stocks;
+        generateFilterLists(data.stocks);
+        
+        // 渲染股票列表
+        renderStockList(data.stocks);
+        
+        // 保存数据供筛选使用
+        window.stockData = data.stocks;
             } catch (error) {
                 console.error('加载股票数据失败:', error);
                 // 如果加载失败，显示错误信息
@@ -2088,9 +2088,17 @@
         function generateFilterLists(stockData) {
             // 统计细分行业出现频率
             const subIndustryCount = {};
+            const subIndustryStats = {}; // 存储每个细分行业的总市值和总金额
+            
             stockData.forEach(stock => {
                 if (stock.subIndustry && stock.subIndustry !== '--') {
                     subIndustryCount[stock.subIndustry] = (subIndustryCount[stock.subIndustry] || 0) + 1;
+                    // 累积总市值和总金额
+                    if (!subIndustryStats[stock.subIndustry]) {
+                        subIndustryStats[stock.subIndustry] = { marketValue: 0, amount: 0 };
+                    }
+                    subIndustryStats[stock.subIndustry].marketValue += stock.marketValue_value || 0;
+                    subIndustryStats[stock.subIndustry].amount += stock.amount_value || 0;
                 }
             });
             
@@ -2105,12 +2113,16 @@
             sortedSubIndustries.forEach(([industry, count]) => {
                 const li = document.createElement('li');
                 li.className = 'filter-item';
-                li.innerHTML = `<a href="#" class="filter-link">${industry} (${count})</a>`;
+                // 格式化总市值和总金额显示
+                const marketValueFormatted = formatMarketValue(subIndustryStats[industry].marketValue);
+                const amountFormatted = formatAmount(subIndustryStats[industry].amount);
+                li.innerHTML = `<a href="#" class="filter-link">${industry} (${count})<br><small>市值:${marketValueFormatted} 金额:${amountFormatted}</small></a>`;
                 industryList.appendChild(li);
             });
             
             // 统计概念标签出现频率
             const conceptCount = {};
+            const conceptStats = {}; // 存储每个概念的总市值和总金额
             // 定义需要过滤掉的概念标签
             const filteredConcepts = ['融资融券', '国企改革', 'ST板块', '深股通', '沪股通'];
             
@@ -2123,6 +2135,12 @@
                     concepts.forEach(concept => {
                         if (concept && !filteredConcepts.includes(concept)) {
                             conceptCount[concept] = (conceptCount[concept] || 0) + 1;
+                            // 累积总市值和总金额
+                            if (!conceptStats[concept]) {
+                                conceptStats[concept] = { marketValue: 0, amount: 0 };
+                            }
+                            conceptStats[concept].marketValue += stock.marketValue_value || 0;
+                            conceptStats[concept].amount += stock.amount_value || 0;
                         }
                     });
                 }
@@ -2139,9 +2157,34 @@
             sortedConcepts.forEach(([concept, count]) => {
                 const li = document.createElement('li');
                 li.className = 'filter-item';
-                li.innerHTML = `<a href="#" class="filter-link">${concept} (${count})</a>`;
+                // 格式化总市值和总金额显示
+                const marketValueFormatted = formatMarketValue(conceptStats[concept].marketValue);
+                const amountFormatted = formatAmount(conceptStats[concept].amount);
+                li.innerHTML = `<a href="#" class="filter-link">${concept} (${count})<br><small>市值:${marketValueFormatted} 金额:${amountFormatted}</small></a>`;
                 conceptList.appendChild(li);
             });
+        }
+        
+        // 格式化市值显示函数
+        function formatMarketValue(value) {
+            if (value >= 100000000) {
+                return (value / 100000000).toFixed(2) + '亿';
+            } else if (value >= 10000) {
+                return (value / 10000).toFixed(2) + '万';
+            } else {
+                return value.toFixed(2);
+            }
+        }
+        
+        // 格式化金额显示函数
+        function formatAmount(value) {
+            if (value >= 100000000) {
+                return (value / 100000000).toFixed(2) + '亿';
+            } else if (value >= 10000) {
+                return (value / 10000).toFixed(2) + '万';
+            } else {
+                return value.toFixed(2);
+            }
         }
         
         // 渲染股票列表
@@ -2639,8 +2682,13 @@
                     } else if (filterText === '跌停股票') {
                         filteredData = window.stockData.filter(stock => stock.change.startsWith('-'));
                     } else if (filterText !== '全部股票') {
-                        // 提取筛选文本（去掉频次部分）
-                        const actualFilterText = filterText.replace(/\s*\(\d+\)$/, '');
+                        // 提取筛选文本（去掉频次部分和额外的HTML内容）
+                        let actualFilterText = filterText.replace(/\s*\(\d+\).*$/, ''); // 移除(数字)及其后面的所有内容
+                        
+                        // 如果还有换行符，只取第一行作为筛选文本
+                        if (actualFilterText.includes('\n')) {
+                            actualFilterText = actualFilterText.split('\n')[0];
+                        }
                         
                         // 按行业或概念筛选
                         filteredData = window.stockData.filter(stock => {
