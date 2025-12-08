@@ -347,6 +347,13 @@
             color: #2c3e50;
         }
         
+        .trade-date {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
         /* 统计卡片 */
         .stats-grid {
             display: grid;
@@ -1757,6 +1764,7 @@
             <div class="content">
                 <div class="content-header">
                     <h2 class="content-title">今日市场概览</h2>
+                    <div class="trade-date">交易日期：<span id="trade-date-value"></span></div>
                 </div>
                 
                 <!-- 统计卡片 -->
@@ -2059,6 +2067,9 @@
                 const response = await fetch(`./stock_data.json?t=${timestamp}`);
                 const data = await response.json();
                 
+                // 更新交易日期
+                updateTradeDate(data.trade_date);
+                
                 // 更新统计数据
                 updateStatistics(data.statistics);
                 
@@ -2074,6 +2085,14 @@
                 console.error('加载股票数据失败:', error);
                 // 如果加载失败，显示错误信息
                 document.getElementById('stock-list').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">数据加载失败，请检查stock_data.json文件是否存在</td></tr>';
+            }
+        }
+        
+        // 更新交易日期显示
+        function updateTradeDate(tradeDate) {
+            const tradeDateElement = document.getElementById('trade-date-value');
+            if (tradeDateElement) {
+                tradeDateElement.textContent = tradeDate;
             }
         }
         
